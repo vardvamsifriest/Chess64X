@@ -2,7 +2,7 @@ import {Logo} from "../components/logo"
 import {PlayerIcon} from "../icons/playericon"
 import {useState} from "react"
 import { UserProfile  } from "../components/userprofile"
-import {Card} from "../components/card"
+import {Card} from "../components/dashcard"
 
 export function Dashboard() {
   const [ShowProfile, setShowProfile] = useState(false);
@@ -36,7 +36,7 @@ export function Dashboard() {
       <div className="flex items-center gap-16 mt-20 ">
         <img src="./player.png" className="h-70 w-70 " />
         <div className="translate-x-30">
-        <Card showbutton text="JOIN ROOM" title="Welcome to Dashboard" />   
+        <Card showbutton title="Welcome to Dashboard"/>   
         </div> 
         </div>
         </div>

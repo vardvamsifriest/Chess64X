@@ -1,32 +1,62 @@
-import {Chess} from "chess.js"
-import {useState} from "react"
-import {useRef} from "react"
+import { Chess } from "chess.js";
+import { useEffect, useRef, useState } from "react";
 import { Chessboard } from "./chessboard";
 
-export function GameController(){
+type Color = "white" | "black";
 
+export function GameController() {
+  const chessRef = useRef(new Chess());
+  const socketRef = useRef<WebSocket | null>(null);
 
-const chessRef = useRef(new Chess());
-const [current , setcurrent] = useState(chessRef.current.fen())
-return(
-        <Chessboard board = {chessRef.current.board()}
-        onMove={MakeMove}/>
-    )
+  const [board, setBoard] = useState(chessRef.current.board());
+  const [myColor, setMyColor] = useState<Color>("white");
+  const [isMyTurn, setIsMyTurn] = useState(false);
 
+  useEffect(() => {
+    const socket = new WebSocket("ws://localhost:8080");
+    socketRef.current = socket;
 
+    socket.onopen = () => {
+      socket.send(JSON.stringify({ type: "INIT_GAME" }));
+    };
 
-   function MakeMove(from:string,to:string){
-    const move = chessRef.current.move({from:from,to:to})
-    
-    if(move)
-    {
-        setcurrent(chessRef.current.fen());
+    socket.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
 
-    }
-    return(
-        <Chessboard board = {chessRef.current.board()}
-        onMove={MakeMove}/>
-    )
+      if (msg.type === "INIT_GAME") {
+        setMyColor(msg.payload.color);
+        setIsMyTurn(msg.payload.color === "white");
+      }
 
-}
+      if (msg.type === "MOVE") {
+        chessRef.current.move(msg.payload);
+        setBoard(chessRef.current.board()); // 🔥 REQUIRED
+        setIsMyTurn(true);
+      }
+    };
+
+    return () => socket.close();
+  }, []);
+
+  function MakeMove(from: string, to: string) {
+    if (!isMyTurn) return;
+
+    const move = chessRef.current.move({ from, to });
+    if (!move) return;
+
+    socketRef.current?.send(
+      JSON.stringify({ type: "MOVE", payload: { from, to } })
+    );
+
+    setBoard(chessRef.current.board()); // 🔥 REQUIRED
+    setIsMyTurn(false);
+  }
+
+  return (
+    <Chessboard
+      board={board}
+      onMove={MakeMove}
+      orientation={myColor ?? "white"}
+    />
+  );
 }
