@@ -1,7 +1,7 @@
 import { Chess } from "chess.js";
 import { useEffect, useState } from "react";
 import { Chessboard } from "./chessboard";
-import { useSharedSocket } from "../../hooks/socketcontext";
+import { useSharedSocket } from "../../context/socketcontext";
 
 type Color = "white" | "black";
 

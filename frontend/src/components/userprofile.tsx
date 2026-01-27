@@ -1,5 +1,5 @@
 import {CrossIcon} from "../icons/crossicon"
-import {Button} from "../components/button"
+import {Button} from "./button"
 import { useNavigate } from "react-router-dom";
 
 interface userprop {

@@ -6,7 +6,7 @@ import {Dashboard} from "./pages/dashboard"
 import { SignIn } from './pages/signin'
 import {GamePage} from "./pages/game"
 import { WaitingPage } from './pages/waitingpage'
-import { SocketProvider } from './hooks/socketcontext'
+import { SocketProvider } from './context/socketcontext'
 
 
 function App() {

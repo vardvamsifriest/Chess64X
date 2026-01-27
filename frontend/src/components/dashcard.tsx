@@ -1,4 +1,4 @@
-import { useSharedSocket } from "../hooks/socketcontext";
+import { useSharedSocket } from "../context/socketcontext";
 import { Button } from "./button";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
