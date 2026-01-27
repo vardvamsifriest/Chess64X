@@ -7,9 +7,9 @@ const gamemanager = new GameManager();
 
 wss.on("connection", (ws: WebSocket) => {
   gamemanager.addUser(ws);
-  console.log("client connected")
+ 
   ws.on("close", () => {
     gamemanager.removeUser(ws);
-    console.log("client disconnected")
+    
   });
 });

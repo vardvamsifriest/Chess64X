@@ -1,62 +1,69 @@
 import { Chess } from "chess.js";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Chessboard } from "./chessboard";
+import { useSharedSocket } from "../../hooks/socketcontext";
 
 type Color = "white" | "black";
 
 export function GameController() {
-  const chessRef = useRef(new Chess());
-  const socketRef = useRef<WebSocket | null>(null);
+  const [chess, setChess] = useState(new Chess());
+  const socket = useSharedSocket();
 
-  const [board, setBoard] = useState(chessRef.current.board());
   const [myColor, setMyColor] = useState<Color>("white");
-  const [isMyTurn, setIsMyTurn] = useState(false);
+  const [isMyTurn, setIsMyTurn] = useState(true);
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8080");
-    socketRef.current = socket;
+    if (!socket) return;
 
-    socket.onopen = () => {
-      socket.send(JSON.stringify({ type: "INIT_GAME" }));
-    };
-
-    socket.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-
-      if (msg.type === "INIT_GAME") {
+    const handleMessage = (e: MessageEvent) => {
+      const msg = JSON.parse(e.data);
+      
+      if (msg.type === "init_game") {
         setMyColor(msg.payload.color);
         setIsMyTurn(msg.payload.color === "white");
       }
-
-      if (msg.type === "MOVE") {
-        chessRef.current.move(msg.payload);
-        setBoard(chessRef.current.board()); // 🔥 REQUIRED
+      
+      if (msg.type === "move") {
+        setChess((prevChess) => {
+          const newChess = new Chess(prevChess.fen());
+          newChess.move(msg.payload);
+          return newChess;
+        });
         setIsMyTurn(true);
+      }
+      
+      if (msg.type === "game_over") {
+        alert(`Game Over! Winner: ${msg.payload.winner}`);
       }
     };
 
-    return () => socket.close();
-  }, []);
+    socket.addEventListener("message", handleMessage);
+    
+    return () => {
+      socket.removeEventListener("message", handleMessage);
+    };
+  }, [socket]);
 
-  function MakeMove(from: string, to: string) {
-    if (!isMyTurn) return;
+  const MakeMove = (from: string, to: string) => {
+    if (!isMyTurn || !socket) return false;
 
-    const move = chessRef.current.move({ from, to });
-    if (!move) return;
+    const tempChess = new Chess(chess.fen());
+    const move = tempChess.move({ from, to });
+    
+    if (!move) return false;
 
-    socketRef.current?.send(
-      JSON.stringify({ type: "MOVE", payload: { from, to } })
-    );
-
-    setBoard(chessRef.current.board()); // 🔥 REQUIRED
+    setChess(tempChess);
+    socket.send(JSON.stringify({ type: "move", payload: { from, to } }));
     setIsMyTurn(false);
-  }
+    
+    return true;
+  };
 
   return (
     <Chessboard
-      board={board}
+      board={chess.board()}
       onMove={MakeMove}
-      orientation={myColor ?? "white"}
+      orientation={myColor}
     />
   );
 }

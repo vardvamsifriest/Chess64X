@@ -4,23 +4,19 @@ import { pieces } from "./piece";
 
 interface Props {
   board: any[][];
-  onMove: (from: string, to: string) => boolean | void;
+  onMove: (from: string, to: string) => void;
   orientation: "white" | "black";
 }
 
 export function Chessboard({ board, onMove, orientation }: Props) {
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
 
-  // Flip board for black
-  const displayBoard =
-    orientation === "black" ? [...board].reverse() : board;
+  const displayBoard = orientation === "black" ? [...board].reverse() : board;
 
   function getSquare(i: number, j: number): Square {
     const files = "abcdefgh";
-    const file =
-      orientation === "black" ? files[7 - j] : files[j];
-    const rank =
-      orientation === "black" ? i + 1 : 8 - i;
+    const file = files[j];
+    const rank = 8 - i;
     return (file + rank) as Square;
   }
 
@@ -37,10 +33,8 @@ export function Chessboard({ board, onMove, orientation }: Props) {
       return;
     }
 
-    const moved = onMove(selectedSquare, square);
-    if (moved !== false) {
-      setSelectedSquare(null);
-    }
+    onMove(selectedSquare, square);
+    setSelectedSquare(null);
   }
 
   return (
@@ -50,16 +44,13 @@ export function Chessboard({ board, onMove, orientation }: Props) {
           {row.map((square, j) => {
             const isDark = (i + j) % 2 === 1;
             const sq = getSquare(i, j);
-
             return (
               <div
                 key={j}
                 onClick={() => handleClick(i, j)}
-                className={`w-14 h-14 flex items-center justify-center
-                  ${isDark ? "bg-yellow-700" : "bg-amber-50"}
-                  ${selectedSquare === sq ? "ring-4 ring-yellow-800" : ""}
-                  cursor-pointer
-                `}
+                className={`w-14 h-14 flex items-center justify-center ${
+                  isDark ? "bg-yellow-700" : "bg-amber-50"
+                } ${selectedSquare === sq ? "ring-4 ring-yellow-800" : ""}`}
               >
                 {square && (
                   <img
@@ -69,7 +60,6 @@ export function Chessboard({ board, onMove, orientation }: Props) {
                         : square.type
                     ]}
                     className="w-8 h-8 pointer-events-none"
-                    draggable={false}
                   />
                 )}
               </div>

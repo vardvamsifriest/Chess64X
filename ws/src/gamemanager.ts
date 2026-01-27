@@ -1,6 +1,6 @@
-import { INIT_GAME, MOVE } from "./message.js";
+import { WebSocket } from "ws";
 import { Game } from "./Game.js";
-import WebSocket from "ws";
+import { INIT_GAME, MOVE } from "./message.js";
 
 export class GameManager {
   private games: Game[] = [];
@@ -9,52 +9,52 @@ export class GameManager {
 
   addUser(socket: WebSocket) {
     this.users.push(socket);
-    this.addHandler(socket);
-
+    
+    socket.on("message", (data) => this.handleMessage(socket, data));
+    socket.on("close", () => this.removeUser(socket));
   }
+
   removeUser(socket: WebSocket) {
-    this.users = this.users.filter(user => user !== socket);
+    this.users = this.users.filter((u) => u !== socket);
+    
     if (this.pendingUser === socket) {
       this.pendingUser = null;
     }
 
-
-    const game = this.games.find(g => g.hasPlayer(socket));
+    const game = this.games.find((g) => g.hasPlayer(socket));
     if (game) {
-      this.games = this.games.filter(g => g !== game);
+      this.games = this.games.filter((g) => g !== game);
     }
   }
 
-  private addHandler(socket: WebSocket) {
-    socket.on("message", (data) => {
-      let message;
-      try {
-        message = JSON.parse(data.toString());
-      } catch {
-        return;
-      }
+  private handleMessage(socket: WebSocket, data: WebSocket.Data) {
+    let msg;
+    try {
+      msg = JSON.parse(data.toString());
+    } catch (err) {
+      return;
+    }
 
-    
-      if (message.type === INIT_GAME) {
-        if (this.pendingUser) {
-            console.log("Matchfound")
-          const game = new Game(this.pendingUser, socket);
-          this.games.push(game);
-          this.pendingUser = null;
-        } else {
-            console.log("user in queue")
-          this.pendingUser = socket;
-        }
-      }
+    if (msg.type === INIT_GAME) {
+      const existingGame = this.games.find((g) => g.hasPlayer(socket));
+      if (existingGame) return;
 
-     
-      if (message.type === MOVE && message.move) {
-        const game = this.games.find(g => g.hasPlayer(socket));
-        if (game) {
-          game.makeMove(socket, message.move);
-        }
+      if (this.pendingUser === socket) return;
+      
+      if (this.pendingUser && this.pendingUser !== socket) {
+        const game = new Game(this.pendingUser, socket);
+        this.games.push(game);
+        this.pendingUser = null;
+      } else {
+        this.pendingUser = socket;
       }
-    });
+    }
+
+    if (msg.type === MOVE) {
+      const game = this.games.find((g) => g.hasPlayer(socket));
+      if (game) {
+        game.makeMove(socket, msg.payload);
+      }
+    }
   }
 }
-

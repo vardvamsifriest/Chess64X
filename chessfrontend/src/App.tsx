@@ -1,4 +1,4 @@
-import { useState } from 'react'
+
 import {Route,Routes,BrowserRouter} from "react-router-dom"
 import {Signup} from "./pages/signup"
 import {Landing} from "./pages/landing"
@@ -6,7 +6,7 @@ import {Dashboard} from "./pages/dashboard"
 import { SignIn } from './pages/signin'
 import {GamePage} from "./pages/game"
 import { WaitingPage } from './pages/waitingpage'
-import { SocketProvider } from './socketprovider'
+import { SocketProvider } from './hooks/socketcontext'
 
 
 function App() {
